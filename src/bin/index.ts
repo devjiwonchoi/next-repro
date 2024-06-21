@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { join } from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { name } from '../../package.json'
 import { copyPaste } from '../utils'
+import { name } from '../../package.json'
 
 async function resolvePackageJson({
   targetPath,
@@ -30,6 +30,7 @@ async function resolvePackageJson({
       '@types/node': 'latest',
       '@types/react': 'latest',
       '@types/react-dom': 'latest',
+      'next-repro': 'latest',
       typescript: 'latest',
     },
   }

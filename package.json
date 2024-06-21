@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "bin": "./dist/index.js",
   "scripts": {
-    "build": "bunchee && tsx ./src/scripts/fixtures-to-dist.ts",
+    "build": "bunchee && tsx ./scripts/fixtures-to-dist.ts",
     "test": "jest"
   },
   "devDependencies": {
