@@ -30,6 +30,12 @@ export async function copyPaste({
       }
 
       if (entry.isFile()) {
+        if (entry.name === 'gitignore') {
+          return copyFile(join(source, entry.name), join(target, '.gitignore'))
+        }
+        if (entry.name === 'index.test') {
+          return copyFile(join(source, entry.name), join(target, '.gitignore'))
+        }
         return copyFile(join(source, entry.name), join(target, entry.name))
       }
     })
