@@ -1,3 +1,22 @@
 {
-  "name": "next-repro"
+  "name": "next-repro",
+  "version": "0.0.0",
+  "bin": "./dist/index.js",
+  "scripts": {
+    "build": "bunchee"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.7",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "bunchee": "^5.2.1",
+    "commander": "^12.1.0",
+    "conf": "^13.0.0",
+    "picocolors": "^1.0.1",
+    "prompts": "^2.4.2"
+  },
+  "files": [
+    "./dist",
+    "./src/fixtures"
+  ]
 }
