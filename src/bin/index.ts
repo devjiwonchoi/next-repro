@@ -1,44 +1,7 @@
 #!/usr/bin/env node
 import { join } from 'node:path'
 import { readdir, mkdir, copyFile, writeFile } from 'node:fs/promises'
-
-async function copyPaste({
-  source,
-  target,
-  options,
-}: {
-  source: string
-  target: string
-  options?: {
-    isApp: boolean
-  }
-}) {
-  const entries = await readdir(source, { withFileTypes: true })
-
-  await Promise.all(
-    entries.map(async (entry) => {
-      if (entry.isDirectory()) {
-        if (
-          (options?.isApp && entry.name === 'pages') ||
-          (!options?.isApp && entry.name === 'app')
-        ) {
-          return
-        }
-
-        await mkdir(join(target, entry.name))
-
-        return copyPaste({
-          source: join(source, entry.name),
-          target: join(target, entry.name),
-        })
-      }
-
-      if (entry.isFile()) {
-        return copyFile(join(source, entry.name), join(target, entry.name))
-      }
-    })
-  )
-}
+import { copyPaste } from '../utils'
 
 async function resolvePackageJson({
   targetPath,
@@ -89,7 +52,7 @@ async function initRepro({
   await copyPaste({
     source: fixturesDir,
     target: targetPath,
-    options: { isApp: router === 'app' },
+    options: { router },
   })
 
   await resolvePackageJson({ targetPath, name })
