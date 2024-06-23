@@ -1,55 +1,19 @@
 #!/usr/bin/env node
 import { join } from 'node:path'
-import { readdir, mkdir, copyFile, writeFile } from 'node:fs/promises'
-
-async function copyPaste({
-  source,
-  target,
-  options,
-}: {
-  source: string
-  target: string
-  options?: {
-    isApp: boolean
-  }
-}) {
-  const entries = await readdir(source, { withFileTypes: true })
-
-  await Promise.all(
-    entries.map(async (entry) => {
-      if (entry.isDirectory()) {
-        if (
-          (options?.isApp && entry.name === 'pages') ||
-          (!options?.isApp && entry.name === 'app')
-        ) {
-          return
-        }
-
-        await mkdir(join(target, entry.name))
-
-        return copyPaste({
-          source: join(source, entry.name),
-          target: join(target, entry.name),
-        })
-      }
-
-      if (entry.isFile()) {
-        return copyFile(join(source, entry.name), join(target, entry.name))
-      }
-    })
-  )
-}
+import { mkdir, writeFile } from 'node:fs/promises'
+import { copyPaste } from '../utils'
+import { name } from '../../package.json'
 
 async function resolvePackageJson({
   targetPath,
-  name,
+  reproName,
 }: {
   targetPath: string
-  name: string
+  reproName: string
 }) {
   const targetPkgPath = join(targetPath, 'package.json')
   const pkgData = {
-    name,
+    reproName,
     private: true,
     scripts: {
       dev: 'next dev',
@@ -66,6 +30,7 @@ async function resolvePackageJson({
       '@types/node': 'latest',
       '@types/react': 'latest',
       '@types/react-dom': 'latest',
+      'next-repro': 'latest',
       typescript: 'latest',
     },
   }
@@ -73,30 +38,76 @@ async function resolvePackageJson({
   await writeFile(targetPkgPath, JSON.stringify(pkgData, null, 2))
 }
 
+async function resolveTestFile({
+  targetPath,
+  reproName,
+}: {
+  targetPath: string
+  reproName: string
+}) {
+  const testFileText = `import { nextTestSetup } from '${name}'
+
+describe('${reproName}', () => {
+  const { next } = nextTestSetup({
+    files: __dirname,
+  })
+
+  // Recommended for tests that check HTML. Cheerio is a HTML parser that has a jQuery like API.
+  it('should work using cheerio', async () => {
+    const $ = await next.render$('/')
+    expect($('p').text()).toBe('hello world')
+  })
+
+  // Recommended for tests that need a full browser
+  it('should work using browser', async () => {
+    const browser = await next.browser('/')
+    expect(await browser.elementByCss('p').text()).toBe('hello world')
+  })
+
+  // In case you need the full HTML. Can also use $.html() with cheerio.
+  it('should work with html', async () => {
+    const html = await next.render('/')
+    expect(html).toContain('hello world')
+  })
+
+  // In case you need to test the response object
+  it('should work with fetch', async () => {
+    const res = await next.fetch('/')
+    const html = await res.text()
+    expect(html).toContain('hello world')
+  })
+})
+`
+
+  const testFilePath = join(targetPath, 'index.test.ts')
+  await writeFile(testFilePath, testFileText)
+}
+
 async function initRepro({
   cwd,
-  name,
+  reproName,
   router,
 }: {
   cwd: string
-  name: string
+  reproName: string
   router: 'app' | 'pages'
 }) {
-  const targetPath = join(cwd, name)
+  const targetPath = join(cwd, reproName)
   await mkdir(targetPath)
 
   const fixturesDir = join(__dirname, 'fixtures')
   await copyPaste({
     source: fixturesDir,
     target: targetPath,
-    options: { isApp: router === 'app' },
+    options: { router },
   })
 
-  await resolvePackageJson({ targetPath, name })
+  await resolvePackageJson({ targetPath, reproName })
+  await resolveTestFile({ targetPath, reproName })
 }
 
 initRepro({
   cwd: process.cwd(),
-  name: 'repro',
+  reproName: 'repro',
   router: 'app',
 })
